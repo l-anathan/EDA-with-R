@@ -1,0 +1,485 @@
+README
+================
+
+# Exploratory Data Analysis with R
+
+## Introduction
+
+This assignment explores the use of exploratory data analysis (EDA) to identify patterns, variation, unusual observations,and missing values in datasets. Using the diamonds and flights datasets, I will investigate variable distributions, compare visualization methods, and examine how missing values influence data analysis.
+
+``` r
+library(tidyverse)
+```
+
+    ## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+    ## ✔ dplyr     1.2.1     ✔ readr     2.2.0
+    ## ✔ forcats   1.0.1     ✔ stringr   1.6.0
+    ## ✔ ggplot2   4.0.4     ✔ tibble    3.3.1
+    ## ✔ lubridate 1.9.5     ✔ tidyr     1.3.2
+    ## ✔ purrr     1.2.2     
+    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ✖ dplyr::filter() masks stats::filter()
+    ## ✖ dplyr::lag()    masks stats::lag()
+    ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+
+``` r
+library(ggplot2)
+library(dplyr)
+library(nycflights13)
+
+data("diamonds")
+data("flights", package = "nycflights13")
+```
+
+# 10.3.3 Exercises: Variation
+
+## Question 1: Distribution of Diamond Dimensions
+
+This question explores the distributions of the x, y, and z variables, which represent the physical dimensions of diamonds in millimeters.
+
+``` r
+ggplot(diamonds, aes(x = x)) +
+  geom_histogram(binwidth = 0.2, fill = "steelblue",
+                 color = "black") +
+  labs(title = "Distribution of Diamond Length",
+       x = "Length (mm)", y = "Count")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = y)) +
+  geom_histogram(binwidth = 0.2, fill = "lightgreen",
+                 color = "black") +
+  labs(title = "Distribution of Diamond Width",
+       x = "Width (mm)", y = "Count")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = z)) +
+  geom_histogram(binwidth = 0.2, fill = "salmon",
+                 color = "black") +
+  labs(title = "Distribution of Diamond Depth",
+       x = "Depth (mm)", y = "Count")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-2-3.png)<!-- -->
+
+``` r
+summary(diamonds[, c("x", "y", "z")])
+```
+
+    ##        x                y                z         
+    ##  Min.   : 0.000   Min.   : 0.000   Min.   : 0.000  
+    ##  1st Qu.: 4.710   1st Qu.: 4.720   1st Qu.: 2.910  
+    ##  Median : 5.700   Median : 5.710   Median : 3.530  
+    ##  Mean   : 5.731   Mean   : 5.735   Mean   : 3.539  
+    ##  3rd Qu.: 6.540   3rd Qu.: 6.540   3rd Qu.: 4.040  
+    ##  Max.   :10.740   Max.   :58.900   Max.   :31.800
+
+``` r
+diamonds %>%
+  filter(x == 0 | y == 0 | z == 0 |
+         x > 20 | y > 20 | z > 20) %>%
+  select(carat, price, x, y, z)
+```
+
+    ## # A tibble: 23 × 5
+    ##    carat price     x     y     z
+    ##    <dbl> <int> <dbl> <dbl> <dbl>
+    ##  1  1     3142  6.55  6.48  0   
+    ##  2  1.01  3167  6.66  6.6   0   
+    ##  3  1.1   3696  6.5   6.47  0   
+    ##  4  1.01  3837  6.5   6.47  0   
+    ##  5  1.5   4731  7.15  7.04  0   
+    ##  6  1.07  4954  0     6.62  0   
+    ##  7  1     5139  0     0     0   
+    ##  8  1.15  5564  6.88  6.83  0   
+    ##  9  1.14  6381  0     0     0   
+    ## 10  2    12210  8.09 58.9   8.06
+    ## # ℹ 13 more rows
+
+### Interpretation
+
+The histograms of the x, y, and z variables reveal that most diamonds have relatively small physical dimensions, although their distributions differ in spread and the presence of unusual values. The length (x) and width (y) variables have nearly identical centers, with mean values of 5.731 mm and 5.735 mm and median values of 5.70 mm and 5.71 mm, respectively. This similarity suggests that many diamonds have comparable length and width measurements, making it difficult to distinguish between the two dimensions based on their distributions alone. Most length and width measurements are concentrated between approximately 4 and 7 mm, while depth (z) is generally smaller, with a mean of 3.539 mm and a median of 3.53 mm. The depth distribution is also more tightly concentrated, reflecting the smaller vertical dimension of most diamonds. All three histograms contain noticeable peaks rather than perfectly smooth distributions, suggesting that certain diamond dimensions occur more frequently than others. Additionally, the summary statistics reveal several unusual observations. All three variables have minimum values of 0 mm, which are physically impossible for a diamond and likely indicate missing or incorrectly recorded measurements. The maximum values are also suspicious, particularly the width of 58.90 mm and depth of 31.80 mm, which are dramatically larger than the typical measurements. These extreme values are visible in the histograms as isolated observations and cause the width and depth distributions to appear compressed toward the left side of their graphs. Overall, the analysis demonstrates that while diamond dimensions follow relatively consistent patterns, the dataset contains potential data quality issues that should be investigated before conducting further statistical analysis.
+
+## Question 2: Distribution of Diamond Prices
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram(binwidth = 1000,
+                 fill = "steelblue", color = "black") +
+  labs(title = "Diamond Prices: Binwidth 1000",
+       x = "Price ($)", y = "Count")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram(binwidth = 500,
+                 fill = "lightgreen", color = "black") +
+  labs(title = "Diamond Prices: Binwidth 500",
+       x = "Price ($)", y = "Count")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram(binwidth = 100,
+                 fill = "salmon", color = "black") +
+  labs(title = "Diamond Prices: Binwidth 100",
+       x = "Price ($)", y = "Count")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram(binwidth = 10,
+                 fill = "purple", color = "black") +
+  labs(title = "Diamond Prices: Binwidth 10",
+       x = "Price ($)", y = "Count")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-4-4.png)<!-- -->
+
+``` r
+summary(diamonds$price)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##     326     950    2401    3933    5324   18823
+
+``` r
+diamonds %>%
+  summarise(
+    mean_price = mean(price),
+    median_price = median(price),
+    min_price = min(price),
+    max_price = max(price)
+  )
+```
+
+    ## # A tibble: 1 × 4
+    ##   mean_price median_price min_price max_price
+    ##        <dbl>        <dbl>     <int>     <int>
+    ## 1      3933.         2401       326     18823
+
+### Interpretation
+
+The histograms of diamond prices reveal a strongly right-skewed distribution, indicating that most diamonds are relatively inexpensive while a much smaller number have exceptionally high prices. The summary statistics support this observation, with a mean price of \$3,933 and a median of \$2,401. The mean being substantially higher than the median reflects the influence of expensive diamonds pulling the average upward. Prices range from a minimum of \$326 to a maximum of \$18,823, with the first quartile at \$950 and the third quartile at \$5,324, meaning that half of all diamonds are priced between these two values. Comparing histograms with binwidths of 1,000, 500, 100, and 10 demonstrates how the choice of binwidth affects the patterns visible in the data. At a binwidth of 1,000, the distribution appears relatively smooth, with a large concentration of diamonds at lower prices and a gradual decline as prices increase. Reducing the binwidth to 500 reveals additional variation, including a noticeable secondary concentration around \$4,000–\$5,000. At a binwidth of 100, more distinct peaks and fluctuations become visible, particularly among diamonds priced below \$2,000. The smallest binwidth of 10 reveals substantial irregularity, with sharp spikes and gaps between neighboring price intervals that are largely hidden in the broader histograms. One particularly interesting feature is the pronounced concentration of diamonds around \$500–\$1,000, suggesting that certain lower price ranges are especially common in the dataset. Additionally, the distribution extends toward \$19,000, but the frequency of diamonds at these higher prices remains consistently low. Overall, these results demonstrate that diamond prices are not evenly distributed and that histogram binwidth plays an important role in identifying patterns. While wider bins are useful for understanding the overall distribution, narrower bins reveal local concentrations and irregularities that might otherwise go unnoticed.
+
+## Question 3: Comparing 0.99 and 1.00 Carat Diamonds
+
+``` r
+diamonds %>%
+  filter(carat == 0.99 | carat == 1.00) %>%
+  count(carat)
+```
+
+    ## # A tibble: 2 × 2
+    ##   carat     n
+    ##   <dbl> <int>
+    ## 1  0.99    23
+    ## 2  1     1558
+
+``` r
+diamonds %>%
+  filter(carat == 0.99 | carat == 1.00) %>%
+  mutate(carat = factor(carat)) %>%
+  ggplot(aes(x = carat)) +
+  geom_bar(fill = "steelblue", color = "black") +
+  labs(title = "Number of Diamonds: 0.99 vs. 1.00 Carats",
+       x = "Carat Weight", y = "Number of Diamonds")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
+diamonds %>%
+  filter(carat == 0.99 | carat == 1.00) %>%
+  group_by(carat) %>%
+  summarise(
+    count = n(),
+    average_price = mean(price),
+    median_price = median(price)
+  )
+```
+
+    ## # A tibble: 2 × 4
+    ##   carat count average_price median_price
+    ##   <dbl> <int>         <dbl>        <dbl>
+    ## 1  0.99    23         4406.         4780
+    ## 2  1     1558         5242.         4864
+
+### Interpretation
+
+The comparison between diamonds weighing 0.99 carats and exactly 1.00 carat reveals a substantial difference in their frequency, despite the extremely small difference in weight. Of the diamonds in the dataset, only 23 weigh 0.99 carats, compared to 1,558 weighing exactly 1.00 carat, meaning that one-carat diamonds are approximately 68 times more common. This difference is clearly illustrated in the bar chart, where the frequency of one-carat diamonds dramatically exceeds that of 0.99-carat diamonds. One likely explanation is the influence of consumer preferences and pricing conventions in the diamond market. A diamond weighing exactly one carat is often considered more desirable than one weighing slightly less because one carat represents a psychologically significant threshold. As a result, diamond cutters may prioritize preserving enough weight to reach the one-carat mark, even when cutting a diamond slightly smaller could potentially improve other characteristics, such as its proportions or appearance. The price comparisons provide additional support for the importance of this threshold. Diamonds weighing 0.99 carats have an average price of approximately \$4,406 and a median price of \$4,780, while diamonds weighing 1.00 carat have a higher average price of approximately \$5,242 and a median price of \$4,864. Although the difference in average prices is substantial, the median prices are relatively similar, suggesting that other characteristics, such as cut, clarity, and color, may also influence pricing. Additionally, the small sample of 0.99-carat diamonds makes direct price comparisons less reliable. Overall, these findings suggest that the unusually large concentration of diamonds at exactly one carat is likely influenced by market incentives and consumer preferences rather than occurring naturally. This demonstrates how economic behavior can shape the distribution of a variable, producing patterns that would not necessarily be expected from physical measurements alone.
+
+## Question 4: Comparing Histogram Zooming Methods
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram(binwidth = 500,
+                 fill = "steelblue", color = "black") +
+  coord_cartesian(xlim = c(2000, 6000)) +
+  labs(title = "Histogram Using coord_cartesian()",
+       x = "Price ($)", y = "Count")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram(binwidth = 500,
+                 fill = "lightgreen", color = "black") +
+  xlim(2000, 6000) +
+  labs(title = "Histogram Using xlim()",
+       x = "Price ($)", y = "Count")
+```
+
+    ## Warning: Removed 35754 rows containing non-finite outside the scale range
+    ## (`stat_bin()`).
+
+    ## Warning: Removed 2 rows containing missing values or values outside the scale range
+    ## (`geom_bar()`).
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram() +
+  coord_cartesian(xlim = c(2000, 6000)) +
+  labs(title = "coord_cartesian() Without Binwidth")
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram() +
+  xlim(2000, 6000) +
+  labs(title = "xlim() Without Binwidth")
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
+
+    ## Warning: Removed 35754 rows containing non-finite outside the scale range
+    ## (`stat_bin()`).
+    ## Removed 2 rows containing missing values or values outside the scale range
+    ## (`geom_bar()`).
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-8-4.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram(binwidth = 500,
+                 boundary = 0,
+                 fill = "steelblue", color = "black") +
+  coord_cartesian(xlim = c(2250, 5750)) +
+  labs(title = "Partial Bars with coord_cartesian()")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-8-5.png)<!-- -->
+
+``` r
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram(binwidth = 500,
+                 boundary = 0,
+                 fill = "lightgreen", color = "black") +
+  xlim(2250, 5750) +
+  labs(title = "Partial Bars with xlim()")
+```
+
+    ## Warning: Removed 37997 rows containing non-finite outside the scale range
+    ## (`stat_bin()`).
+    ## Removed 2 rows containing missing values or values outside the scale range
+    ## (`geom_bar()`).
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-8-6.png)<!-- --> \### Interpretation
+
+The comparison between `coord_cartesian()` and `xlim()` demonstrates that although both functions can be used to zoom into a specific range of a histogram, they affect the underlying data and resulting visualization differently. When examining diamond prices between \$2,000 and \$6,000 with a fixed binwidth of 500, `coord_cartesian()` preserves the entire dataset when calculating the histogram and simply restricts the visible portion of the graph. In contrast, `xlim()` removes observations outside the specified range before calculating the histogram, which can alter the bin counts and overall appearance of the distribution. This difference is evident in the results, where the `xlim()` histogram produces warnings indicating that 35,754 observations were removed for falling outside the selected range, along with two additional bars removed because they extended beyond the scale limits. The two graphs display similar general patterns, but their bars do not align perfectly because the data are handled differently. The distinction becomes more noticeable when the binwidth is left unspecified. In this case, `ggplot2` automatically uses 30 bins, but the resulting binwidth depends on the range of data being considered. With `coord_cartesian()`, the bins are calculated using the full range of diamond prices, producing relatively wide bars and a less detailed view of the selected price interval. With `xlim()`, the bins are calculated using only the remaining observations, resulting in narrower bars and more visible fluctuations within the \$2,000–\$6,000 range. Finally, when zooming into a range that cuts through only part of a histogram bar, `coord_cartesian()` preserves the original bar height and displays only the portion within the selected viewing window. In contrast, `xlim()` removes observations outside the specified limits and can eliminate entire boundary bars rather than displaying their partial widths. This is visible in the final two graphs, where `coord_cartesian()` retains partially visible bars at the edges, while `xlim()` produces warnings indicating that 37,997 observations were excluded and two additional bars were removed. Overall, these findings demonstrate that **`coord_cartesian()` is generally the more appropriate method for zooming into a histogram** because it preserves the original data and bin calculations, whereas `xlim()` can change the statistical representation by filtering observations before the histogram is constructed.
+
+# 10.4.1 Exercises: Unusual Values
+
+## Question 1: Missing Values in Histograms and Bar Charts
+
+``` r
+missing_data <- tibble(
+  numeric_value = c(1, 2, 3, 4, 5, NA, NA),
+  category = c("A", "B", "A", "B", "A", NA, NA)
+)
+
+missing_data
+```
+
+    ## # A tibble: 7 × 2
+    ##   numeric_value category
+    ##           <dbl> <chr>   
+    ## 1             1 A       
+    ## 2             2 B       
+    ## 3             3 A       
+    ## 4             4 B       
+    ## 5             5 A       
+    ## 6            NA <NA>    
+    ## 7            NA <NA>
+
+``` r
+ggplot(missing_data, aes(x = numeric_value)) +
+  geom_histogram(binwidth = 1,
+                 fill = "steelblue", color = "black") +
+  labs(title = "Missing Values in a Histogram",
+       x = "Numeric Value", y = "Count")
+```
+
+    ## Warning: Removed 2 rows containing non-finite outside the scale range
+    ## (`stat_bin()`).
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
+ggplot(missing_data, aes(x = category)) +
+  geom_bar(fill = "lightgreen", color = "black") +
+  labs(title = "Missing Values in a Bar Chart",
+       x = "Category", y = "Count")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-9-2.png)<!-- --> \### Interpretation
+
+The results demonstrate that `ggplot2` handles missing values differently depending on whether the data are numerical or categorical. The dataset contains seven observations, including five complete numerical values (1, 2, 3, 4, and 5) and two missing values (`NA`). In the histogram, each of the five numerical values appears exactly once, producing five bars with a frequency of one. However, the two missing numerical values are automatically excluded because a histogram requires numerical observations to assign values to intervals. This is confirmed by the warning message indicating that two rows containing non-finite values were removed. In contrast, the categorical bar chart includes missing values as a separate category labeled `NA`. The chart shows three observations in category A, two in category B, and two with missing category values, accounting for all seven observations. This distinction is important because missing numerical values cannot be assigned to histogram bins, whereas missing categorical values can be represented as a separate group. As a result, the histogram only displays the distribution of available numerical data, while the bar chart makes the frequency of missing categorical observations visible. Overall, these findings highlight the importance of recognizing how missing data are handled during visualization. Automatically excluding missing numerical observations without considering their frequency could lead to misleading interpretations, particularly in larger datasets with substantial missing information. Therefore, it is important to examine missing values before creating visualizations and determine whether they should be excluded, explicitly represented, or addressed through an appropriate data-cleaning method.
+
+## Question 2: Understanding na.rm = TRUE
+
+``` r
+values <- c(10, 20, 30, NA, 40, 50)
+mean(values)
+```
+
+    ## [1] NA
+
+``` r
+sum(values)
+```
+
+    ## [1] NA
+
+``` r
+mean(values, na.rm = TRUE)
+```
+
+    ## [1] 30
+
+``` r
+sum(values, na.rm = TRUE)
+```
+
+    ## [1] 150
+
+### Interpretation
+
+The argument na.rm = TRUE tells R to remove missing values before performing a calculation. Without this argument, mean() and sum() return NA when the vector contains missing observations. When na.rm = TRUE is included, R ignores missing values and calculates the result using the remaining observations. For example, the mean of the non-missing values is 30, while their sum is 150. This is useful when analyzing datasets containing incomplete observations. However, researchers should consider why values are missing because excluding them can introduce bias if the missingness is systematic.
+
+## Question 3: Flight Cancellations and Departure Times
+
+``` r
+flights2 <- flights %>%
+  mutate(
+    cancelled = is.na(dep_time),
+    sched_hour = sched_dep_time %/% 100,
+    sched_min = sched_dep_time %% 100,
+    sched_dep_time = sched_hour + (sched_min / 60)
+  )
+
+head(flights2)
+```
+
+    ## # A tibble: 6 × 22
+    ##    year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+    ##   <int> <int> <int>    <int>          <dbl>     <dbl>    <int>          <int>
+    ## 1  2013     1     1      517           5.25         2      830            819
+    ## 2  2013     1     1      533           5.48         4      850            830
+    ## 3  2013     1     1      542           5.67         2      923            850
+    ## 4  2013     1     1      544           5.75        -1     1004           1022
+    ## 5  2013     1     1      554           6           -6      812            837
+    ## 6  2013     1     1      554           5.97        -4      740            728
+    ## # ℹ 14 more variables: arr_delay <dbl>, carrier <chr>, flight <int>,
+    ## #   tailnum <chr>, origin <chr>, dest <chr>, air_time <dbl>, distance <dbl>,
+    ## #   hour <dbl>, minute <dbl>, time_hour <dttm>, cancelled <lgl>,
+    ## #   sched_hour <dbl>, sched_min <dbl>
+
+``` r
+ggplot(flights2, aes(x = sched_dep_time)) +
+  geom_freqpoly(aes(color = cancelled),
+                binwidth = 1/4,
+                linewidth = 0.8) +
+  labs(title = "Scheduled Departure Times by Cancellation",
+       x = "Scheduled Departure Time (Hours)",
+       y = "Number of Flights",
+       color = "Cancelled")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+ggplot(flights2, aes(x = sched_dep_time)) +
+  geom_freqpoly(aes(color = cancelled),
+                binwidth = 1/4,
+                linewidth = 0.8) +
+  facet_wrap(~ cancelled, scales = "fixed") +
+  labs(title = "Flight Cancellations: Fixed Scales",
+       x = "Scheduled Departure Time",
+       y = "Number of Flights")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+
+``` r
+ggplot(flights2, aes(x = sched_dep_time)) +
+  geom_freqpoly(aes(color = cancelled),
+                binwidth = 1/4,
+                linewidth = 0.8) +
+  facet_wrap(~ cancelled, scales = "free_y") +
+  labs(title = "Flight Cancellations: Free Y Scales",
+       x = "Scheduled Departure Time",
+       y = "Number of Flights")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-11-3.png)<!-- -->
+
+``` r
+ggplot(flights2, aes(x = sched_dep_time)) +
+  geom_freqpoly(aes(color = cancelled),
+                binwidth = 1/4,
+                linewidth = 0.8) +
+  facet_wrap(~ cancelled, scales = "free") +
+  labs(title = "Flight Cancellations: Free Scales",
+       x = "Scheduled Departure Time",
+       y = "Number of Flights")
+```
+
+![](EDA-with-R_files/figure-gfm/unnamed-chunk-11-4.png)<!-- -->
+
+``` r
+flights2 %>%
+  count(cancelled)
+```
+
+    ## # A tibble: 2 × 2
+    ##   cancelled      n
+    ##   <lgl>      <int>
+    ## 1 FALSE     328521
+    ## 2 TRUE        8255
+
+### Interpretation
+
+The results show that scheduled departure time is associated with differences in the number and distribution of flight cancellations. Of the 336,776 flights in the dataset, 328,521 were not cancelled, while 8,255 were cancelled, representing approximately 2.45% of all flights. The frequency polygons indicate that non-cancelled flights are much more common throughout the day, with particularly high numbers during the morning hours (approximately 6–9 AM) and mid-afternoon (around 3 PM). In contrast, the number of cancelled flights is relatively low during the early morning but generally increases throughout the afternoon and evening, with noticeable peaks between approximately 3 PM and 8 PM. This suggests that cancellations are more concentrated during later departure times, although the graphs display counts rather than cancellation rates, so they cannot establish whether an individual evening flight is more likely to be cancelled. The comparison between fixed and free scales also demonstrates how axis scaling affects interpretation. With fixed scales, the much larger number of non-cancelled flights causes the cancellation pattern to appear almost flat, making it difficult to identify meaningful variation. However, using free y-axis scales allows each category to be displayed independently, revealing fluctuations and peaks in cancellations that were previously difficult to observe. Allowing both axes to vary produces a similar result, although maintaining a common x-axis is preferable for comparing departure times directly. Overall, the analysis demonstrates that while most flights operate as scheduled, cancellation counts vary throughout the day, and choosing appropriate scales is essential for identifying patterns that might otherwise be obscured by differences in group size.
+
+# Conclusion
+
+This exploratory data analysis demonstrated how visualization and data transformation can help identify patterns, unusual observations, and missing values. The diamonds dataset illustrated how histogram binwidths, outliers, and visualization choices influence the interpretation of numerical data. The flights dataset demonstrated how missing values and differences in group sizes can affect comparisons between distributions. Overall, these exercises highlight the importance of selecting appropriate visualizations and carefully examining data quality before drawing conclusions.
